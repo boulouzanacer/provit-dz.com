@@ -1,0 +1,78 @@
+{
+  "info": {
+    "_postman_id": "f1f0a2f4-6af3-43ff-b7a8-0dfadf61b001",
+    "name": "Pro-Vit API v1 (Minimal)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection minimale conservee pour Pro-Vit. Les endpoints mobiles/PME herites de SafeSoft G2D ont ete retires du runtime."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Status",
+      "item": [
+        {
+          "name": "API Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "status"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Geographie",
+      "item": [
+        {
+          "name": "Wilayas",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wilayas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wilayas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Communes By Wilaya",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/communes/16",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "communes",
+                "16"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
