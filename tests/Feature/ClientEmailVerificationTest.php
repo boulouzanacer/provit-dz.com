@@ -2,14 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\Auth\ClientAuthController;
 use App\Mail\ClientEmailVerificationCodeMail;
 use App\Models\Client;
 use App\Models\Fournisseur;
 use App\Services\ClientEmailVerificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Mockery\MockInterface;
 use Tests\TestCase;
 
 class ClientEmailVerificationTest extends TestCase
@@ -60,6 +63,43 @@ class ClientEmailVerificationTest extends TestCase
         $this->assertNull($client->email_verification_code_hash);
         $this->assertNull($client->email_verification_expires_at);
         $this->assertFalse($service->isPending($client));
+    }
+
+    public function test_register_redirects_existing_unverified_client_to_verification_page(): void
+    {
+        $client = $this->createClient();
+
+        $this->mock(ClientEmailVerificationService::class, function (MockInterface $mock) use ($client): void {
+            $mock->shouldReceive('issue')
+                ->once()
+                ->withArgs(fn (Client $pendingClient): bool => $pendingClient->is($client));
+        });
+
+        $session = app('session.store');
+        $session->start();
+
+        $request = Request::create('/register', 'POST', [
+            'nom' => 'Dupont',
+            'prenom' => 'Nadir',
+            'email' => $client->email,
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'telephone' => '0550123456',
+            'adresse' => 'Alger',
+            'id_frs' => $client->id_frs,
+        ]);
+        $request->setLaravelSession($session);
+
+        $response = app(ClientAuthController::class)->register($request);
+
+        $this->assertSame(url('/verify-email'), $response->getTargetUrl());
+        $this->assertSame($client->email, $session->get('pending_client_email'));
+        $this->assertSame($client->id, $session->get('pending_client_id'));
+        $this->assertSame(
+            'Votre compte existe deja, mais votre email n est pas encore confirme. Un nouveau code a ete envoye.',
+            $session->get('success')
+        );
+        $this->assertDatabaseCount('client', 1);
     }
 
     private function createClient(): Client

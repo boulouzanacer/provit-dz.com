@@ -71,12 +71,31 @@ class ClientAuthController extends Controller
         $data = $request->validate([
             'nom' => ['required', 'string', 'max:255'],
             'prenom' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:client,email'],
+            'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'telephone' => ['required', 'string', 'max:255'],
             'adresse' => ['nullable', 'string', 'max:500'],
             'id_frs' => ['required', 'integer', 'exists:frs,id'],
         ]);
+
+        $existingClient = Client::withTrashed()
+            ->where('email', $data['email'])
+            ->first();
+
+        if ($existingClient !== null) {
+            if ($existingClient->deleted_at === null && $existingClient->actif == 1 && $existingClient->email_verified_at === null) {
+                return $this->redirectToPendingVerification(
+                    request: $request,
+                    client: $existingClient,
+                    successMessage: 'Votre compte existe deja, mais votre email n est pas encore confirme. Un nouveau code a ete envoye.',
+                    errorMessage: 'Votre compte existe deja, mais le code de confirmation n a pas pu etre envoye. Utilisez le bouton de renvoi.',
+                );
+            }
+
+            return back()->withInput($request->except(['password', 'password_confirmation']))->withErrors([
+                'email' => 'Cette adresse email est deja utilisee.',
+            ]);
+        }
 
         $client = Client::create([
             'code_client' => null,
@@ -97,17 +116,12 @@ class ClientAuthController extends Controller
             'code_client' => 'CLT-' . str_pad((string) $client->id, 5, '0', STR_PAD_LEFT),
         ]);
 
-        $this->queueVerificationContext($request, $client);
-
-        try {
-            $this->verificationService->issue($client);
-        } catch (Throwable $exception) {
-            report($exception);
-
-            return redirect()->to('/verify-email')->with('error', 'Compte cree, mais le code de confirmation n a pas pu etre envoye. Utilisez le bouton de renvoi.');
-        }
-
-        return redirect()->to('/verify-email')->with('success', 'Compte cree avec succes. Verifiez votre boite email pour confirmer votre adresse.');
+        return $this->redirectToPendingVerification(
+            request: $request,
+            client: $client,
+            successMessage: 'Compte cree avec succes. Verifiez votre boite email pour confirmer votre adresse.',
+            errorMessage: 'Compte cree, mais le code de confirmation n a pas pu etre envoye. Utilisez le bouton de renvoi.',
+        );
     }
 
     public function showVerify(Request $request): View
@@ -222,5 +236,24 @@ class ClientAuthController extends Controller
             'pending_client_email' => $client->email,
             'pending_client_id' => $client->id,
         ]);
+    }
+
+    private function redirectToPendingVerification(
+        Request $request,
+        Client $client,
+        string $successMessage,
+        string $errorMessage,
+    ): RedirectResponse {
+        $this->queueVerificationContext($request, $client);
+
+        try {
+            $this->verificationService->issue($client);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()->to('/verify-email')->with('error', $errorMessage);
+        }
+
+        return redirect()->to('/verify-email')->with('success', $successMessage);
     }
 }
