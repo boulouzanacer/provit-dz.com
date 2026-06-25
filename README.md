@@ -53,6 +53,32 @@ php artisan storage:link
 php artisan serve
 ```
 
+## Email de confirmation via Resend
+- Le flux client utilise maintenant un code de confirmation a 6 chiffres envoye par email apres l'inscription.
+- Un client non verifie ne peut pas se connecter tant que son email n'est pas confirme.
+- Le code expire apres 15 minutes et peut etre renvoye depuis `/verify-email`.
+
+Configurer Resend dans `.env`:
+
+```env
+MAIL_MAILER=resend
+MAIL_FROM_ADDRESS=contact@provit-dz.com
+MAIL_FROM_NAME="${APP_NAME}"
+RESEND_API_KEY=re_xxxxxxxxx
+RESEND_FROM="Pro-Vit <contact@provit-dz.com>"
+```
+
+Pre-requis Resend:
+- Ajouter et verifier le domaine ou l'adresse expediteur dans votre compte Resend
+- Utiliser une adresse compatible avec `RESEND_FROM` et `MAIL_FROM_ADDRESS`
+- Verifier que `APP_URL` pointe vers l'URL reelle du site
+
+Flux utilisateur:
+- Le client remplit `/register`
+- Pro-Vit envoie un code par email via Resend
+- Le client confirme le code sur `/verify-email`
+- La connexion client devient accessible apres verification
+
 Sous Windows PowerShell, utiliser:
 
 ```powershell
@@ -112,6 +138,10 @@ Configurer ensuite `.env` pour MySQL:
 - `DB_DATABASE`
 - `DB_USERNAME`
 - `DB_PASSWORD`
+- `MAIL_MAILER=resend`
+- `RESEND_API_KEY`
+- `RESEND_FROM`
+- `MAIL_FROM_ADDRESS`
 
 ### 3. Configurer Nginx
 Pointer le root sur:

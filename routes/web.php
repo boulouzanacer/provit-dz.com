@@ -27,6 +27,9 @@ Route::get('/login', [ClientAuthController::class, 'showLogin']);
 Route::post('/login', [ClientAuthController::class, 'login']);
 Route::get('/register', [ClientAuthController::class, 'showRegister']);
 Route::post('/register', [ClientAuthController::class, 'register']);
+Route::get('/verify-email', [ClientAuthController::class, 'showVerify']);
+Route::post('/verify-email', [ClientAuthController::class, 'verify']);
+Route::post('/verify-email/resend', [ClientAuthController::class, 'resendVerificationCode']);
 Route::post('/logout', [ClientAuthController::class, 'logout']);
 
 Route::get('/panier', [StoreController::class, 'panier']);

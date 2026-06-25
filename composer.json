@@ -9,7 +9,8 @@
         "intervention/image": "^3.11",
         "laravel/framework": "^11.0",
         "laravel/sanctum": "^4.3",
-        "laravel/tinker": "^2.9"
+        "laravel/tinker": "^2.9",
+        "resend/resend-laravel": "^1.4"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

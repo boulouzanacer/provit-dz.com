@@ -5,13 +5,20 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Fournisseur;
+use App\Services\ClientEmailVerificationService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Throwable;
 
 class ClientAuthController extends Controller
 {
+    public function __construct(
+        private readonly ClientEmailVerificationService $verificationService,
+    ) {
+    }
+
     public function showLogin(): View
     {
         return view('auth.client-login', ['title' => 'Connexion']);
@@ -32,20 +39,21 @@ class ClientAuthController extends Controller
             ]);
         }
 
-        $request->session()->regenerate();
-        $request->session()->put([
-            'role' => 'client',
-            'client_id' => $client->id,
-            'selected_frs_id' => $client->id_frs,
-        ]);
+        if ($client->email_verified_at === null) {
+            $this->queueVerificationContext($request, $client);
 
-        $cartFournisseurId = $request->session()->get('cart_frs_id');
-        if ($cartFournisseurId && (int) $cartFournisseurId !== (int) $client->id_frs) {
-            $request->session()->forget(['cart', 'cart_frs_id']);
-            return redirect()->intended('/')->with('info', 'Le panier a ete vide car votre distributeur par defaut est different.');
+            try {
+                $this->verificationService->issue($client);
+            } catch (Throwable $exception) {
+                report($exception);
+
+                return redirect()->to('/verify-email')->with('error', 'Votre compte existe, mais le code n a pas pu etre envoye. Reessayez dans quelques instants.');
+            }
+
+            return redirect()->to('/verify-email')->with('info', 'Votre email n est pas encore confirme. Un nouveau code a ete envoye.');
         }
 
-        return redirect()->intended('/');
+        return $this->loginClient($request, $client);
     }
 
     public function showRegister(): View
@@ -75,7 +83,7 @@ class ClientAuthController extends Controller
             'nom' => $data['nom'],
             'prenom' => $data['prenom'],
             'email' => $data['email'],
-            'email_verified_at' => now(),
+            'email_verified_at' => null,
             'password' => Hash::make($data['password']),
             'telephone' => $data['telephone'],
             'adresse' => $data['adresse'] ?? null,
@@ -89,6 +97,102 @@ class ClientAuthController extends Controller
             'code_client' => 'CLT-' . str_pad((string) $client->id, 5, '0', STR_PAD_LEFT),
         ]);
 
+        $this->queueVerificationContext($request, $client);
+
+        try {
+            $this->verificationService->issue($client);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()->to('/verify-email')->with('error', 'Compte cree, mais le code de confirmation n a pas pu etre envoye. Utilisez le bouton de renvoi.');
+        }
+
+        return redirect()->to('/verify-email')->with('success', 'Compte cree avec succes. Verifiez votre boite email pour confirmer votre adresse.');
+    }
+
+    public function showVerify(Request $request): View
+    {
+        return view('auth.client-verify', [
+            'title' => 'Confirmation email',
+            'email' => old('email', (string) $request->session()->get('pending_client_email', '')),
+        ]);
+    }
+
+    public function verify(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'email' => ['required', 'email'],
+            'code' => ['required', 'digits:6'],
+        ]);
+
+        $client = Client::query()->where('email', $data['email'])->active()->first();
+
+        if (! $client) {
+            return back()->withInput($request->only('email'))->withErrors([
+                'email' => 'Aucun compte actif ne correspond a cette adresse.',
+            ]);
+        }
+
+        if (! $this->verificationService->isPending($client)) {
+            return back()->withInput($request->only('email'))->withErrors([
+                'code' => 'Le code est invalide ou a expire. Demandez un nouveau code.',
+            ]);
+        }
+
+        if (! $this->verificationService->verify($client, $data['code'])) {
+            return back()->withInput($request->only('email'))->withErrors([
+                'code' => 'Le code saisi est invalide.',
+            ]);
+        }
+
+        $this->verificationService->markVerified($client);
+        $request->session()->forget(['pending_client_email', 'pending_client_id']);
+
+        return $this->loginClient($request, $client->fresh(), 'Adresse email confirmee avec succes.');
+    }
+
+    public function resendVerificationCode(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        $client = Client::query()->where('email', $data['email'])->active()->first();
+
+        if (! $client) {
+            return back()->withInput($request->only('email'))->withErrors([
+                'email' => 'Aucun compte actif ne correspond a cette adresse.',
+            ]);
+        }
+
+        if ($client->email_verified_at !== null) {
+            return redirect()->to('/login')->with('info', 'Cet email est deja confirme. Vous pouvez vous connecter.');
+        }
+
+        $this->queueVerificationContext($request, $client);
+
+        try {
+            $this->verificationService->issue($client);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->withInput($request->only('email'))->with('error', 'Le code n a pas pu etre renvoye pour le moment.');
+        }
+
+        return back()->withInput($request->only('email'))->with('success', 'Un nouveau code de confirmation a ete envoye.');
+    }
+
+    public function logout(Request $request): RedirectResponse
+    {
+        $request->session()->forget(['role', 'client_id', 'pending_client_email', 'pending_client_id']);
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->to('/');
+    }
+
+    private function loginClient(Request $request, Client $client, ?string $message = null): RedirectResponse
+    {
         $request->session()->regenerate();
         $request->session()->put([
             'role' => 'client',
@@ -99,17 +203,24 @@ class ClientAuthController extends Controller
         $cartFournisseurId = $request->session()->get('cart_frs_id');
         if ($cartFournisseurId && (int) $cartFournisseurId !== (int) $client->id_frs) {
             $request->session()->forget(['cart', 'cart_frs_id']);
+
+            return redirect()->intended('/')->with('info', 'Le panier a ete vide car votre distributeur par defaut est different.');
         }
 
-        return redirect()->to('/')->with('success', 'Compte cree avec succes.');
+        $redirect = redirect()->intended('/');
+
+        if ($message !== null) {
+            $redirect->with('success', $message);
+        }
+
+        return $redirect;
     }
 
-    public function logout(Request $request): RedirectResponse
+    private function queueVerificationContext(Request $request, Client $client): void
     {
-        $request->session()->forget(['role', 'client_id']);
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()->to('/');
+        $request->session()->put([
+            'pending_client_email' => $client->email,
+            'pending_client_id' => $client->id,
+        ]);
     }
 }

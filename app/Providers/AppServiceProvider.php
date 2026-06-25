@@ -33,7 +33,7 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(100)->by((string) $key);
         });
 
-        View::composer(['store.*', 'auth.client-login', 'auth.client-register'], function ($view): void {
+        View::composer(['store.*', 'auth.client-login', 'auth.client-register', 'auth.client-verify'], function ($view): void {
             $view->with([
                 'distributors' => Fournisseur::query()
                     ->where('actif', 1)
