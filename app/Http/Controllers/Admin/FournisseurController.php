@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DistributorStock;
 use App\Models\Fournisseur;
+use App\Models\Produit;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -48,7 +51,29 @@ class FournisseurController extends Controller
         $data['actif'] = $request->boolean('actif', true);
         $data['is_visible'] = 1;
 
-        Fournisseur::create($data);
+        DB::transaction(function () use ($data): void {
+            $distributor = Fournisseur::create($data);
+
+            $productIds = Produit::query()
+                ->where('actif', 1)
+                ->pluck('id');
+
+            if ($productIds->isEmpty()) {
+                return;
+            }
+
+            $now = now();
+
+            DistributorStock::query()->insert(
+                $productIds->map(fn (int $productId): array => [
+                    'id_frs' => $distributor->id,
+                    'id_produit' => $productId,
+                    'quantite' => 0,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ])->all()
+            );
+        });
 
         return back()->with('success', 'Distributeur ajoute.');
     }

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\DistributorStock;
+use App\Models\Fournisseur;
 use App\Models\Produit;
 use App\Models\ProduitQuantityPrice;
 use App\Services\ImageProduitService;
@@ -59,6 +61,7 @@ class ProduitController extends Controller
                 'enable_tier_pricing' => $enabled,
             ]);
 
+            $this->ensureActiveProductIsAvailableForAllDistributors($product);
             $this->syncTiers($request, $product, $enabled);
 
             return $product;
@@ -91,6 +94,7 @@ class ProduitController extends Controller
                 'enable_tier_pricing' => $enabled,
             ]);
 
+            $this->ensureActiveProductIsAvailableForAllDistributors($product);
             $this->syncTiers($request, $product, $enabled);
         });
 
@@ -113,6 +117,8 @@ class ProduitController extends Controller
     {
         $product = Produit::query()->findOrFail($id);
         $product->update(['actif' => (int) ! $product->actif]);
+
+        $this->ensureActiveProductIsAvailableForAllDistributors($product->fresh());
 
         return back()->with('success', 'Statut du produit mis a jour.');
     }
@@ -162,5 +168,41 @@ class ProduitController extends Controller
                 'price' => (float) $price,
             ]);
         }
+    }
+
+    private function ensureActiveProductIsAvailableForAllDistributors(Produit $product): void
+    {
+        if ((int) $product->actif !== 1) {
+            return;
+        }
+
+        $distributorIds = Fournisseur::query()->pluck('id');
+
+        if ($distributorIds->isEmpty()) {
+            return;
+        }
+
+        $existingDistributorIds = DistributorStock::query()
+            ->where('id_produit', $product->id)
+            ->pluck('id_frs')
+            ->all();
+
+        $missingDistributorIds = $distributorIds->diff($existingDistributorIds);
+
+        if ($missingDistributorIds->isEmpty()) {
+            return;
+        }
+
+        $now = now();
+
+        DistributorStock::query()->insert(
+            $missingDistributorIds->map(fn (int $distributorId): array => [
+                'id_frs' => $distributorId,
+                'id_produit' => $product->id,
+                'quantite' => 0,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ])->values()->all()
+        );
     }
 }
