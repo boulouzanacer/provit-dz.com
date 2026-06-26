@@ -1,4 +1,216 @@
 @extends('layouts.fournisseur')
 @section('content')
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">@foreach([['label'=>'Clients','value'=>$stats['clients'],'icon'=>'fa-users'],['label'=>'Commandes','value'=>$stats['orders'],'icon'=>'fa-cart-shopping'],['label'=>'En attente','value'=>$stats['pending_orders'],'icon'=>'fa-hourglass-half'],['label'=>'Stock total','value'=>$stats['stock_total'],'icon'=>'fa-warehouse']] as $item)<div class="rounded-3xl border border-white/10 bg-[var(--panel-card)] p-5"><div class="flex items-center justify-between"><div><div class="text-sm text-white/60">{{ $item['label'] }}</div><div class="mt-2 text-3xl font-extrabold">{{ $item['value'] }}</div></div><div class="h-12 w-12 rounded-2xl flex items-center justify-center text-white" style="background:linear-gradient(135deg,#1E6FD9,#0f3b8c)"><i class="fa-solid {{ $item['icon'] }}"></i></div></div></div>@endforeach</div><div class="rounded-3xl border border-white/10 bg-[var(--panel-card)] p-5 overflow-x-auto"><div class="mb-4 font-extrabold">Dernieres commandes</div><table class="min-w-full text-sm"><thead class="text-white/60"><tr><th class="py-3 pr-4 text-left">#</th><th class="py-3 pr-4 text-left">Client</th><th class="py-3 pr-4 text-left">Date</th><th class="py-3 pr-4 text-left">Statut</th><th class="py-3 text-right">Montant</th></tr></thead><tbody class="divide-y divide-white/10">@forelse($latestOrders as $order)<tr><td class="py-3 pr-4"><a href="{{ url('/distributeur/commandes/'.$order->id) }}">#{{ $order->id }}</a></td><td class="py-3 pr-4">{{ $order->client?->prenom }} {{ $order->client?->nom }}</td><td class="py-3 pr-4">{{ optional($order->date_cmd)->format('d/m/Y H:i') }}</td><td class="py-3 pr-4">{{ $order->statut }}</td><td class="py-3 text-right">{{ number_format($order->montant_total, 2, '.', ' ') }} DA</td></tr>@empty<tr><td colspan="5" class="py-8 text-center text-white/60">Aucune commande</td></tr>@endforelse</tbody></table></div>
+@php
+    $cards = [
+        ['label' => 'Clients actifs', 'value' => $stats['clients'], 'meta' => 'Portefeuille distributeur', 'icon' => 'fa-users', 'colors' => 'from-sky-500 via-blue-500 to-indigo-600'],
+        ['label' => 'Commandes', 'value' => $stats['orders'], 'meta' => $stats['delivered_orders'].' livrees', 'icon' => 'fa-cart-shopping', 'colors' => 'from-emerald-500 via-teal-500 to-cyan-500'],
+        ['label' => 'Produits geres', 'value' => $stats['active_products'], 'meta' => $stats['empty_stock_products'].' en rupture', 'icon' => 'fa-boxes-stacked', 'colors' => 'from-violet-500 via-fuchsia-500 to-pink-500'],
+        ['label' => 'Stock total', 'value' => $stats['stock_total'], 'meta' => $stats['low_stock_products'].' stock faible', 'icon' => 'fa-warehouse', 'colors' => 'from-amber-500 via-orange-500 to-red-500'],
+    ];
+    $statusUi = [
+        'en_attente' => 'bg-amber-500/15 text-amber-200 border border-amber-400/20',
+        'confirmee' => 'bg-sky-500/15 text-sky-200 border border-sky-400/20',
+        'en_preparation' => 'bg-violet-500/15 text-violet-200 border border-violet-400/20',
+        'expediee' => 'bg-cyan-500/15 text-cyan-200 border border-cyan-400/20',
+        'livree' => 'bg-emerald-500/15 text-emerald-200 border border-emerald-400/20',
+        'annulee' => 'bg-red-500/15 text-red-200 border border-red-400/20',
+    ];
+@endphp
+
+<div class="space-y-6">
+    <section class="overflow-hidden rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.28),_transparent_28%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(30,41,59,0.9))] p-6 lg:p-8">
+        <div class="grid gap-6 xl:grid-cols-[1.55fr_0.95fr]">
+            <div>
+                <div class="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
+                    Espace distributeur
+                </div>
+                <h2 class="mt-4 text-3xl font-black tracking-tight text-white lg:text-4xl">Un dashboard plus net pour piloter vos commandes, vos clients et vos stocks.</h2>
+                <p class="mt-3 max-w-3xl text-sm leading-7 text-white/70">
+                    Retrouvez les indicateurs essentiels, les priorites de stock et les actions quotidiennes depuis une interface plus lisible et plus professionnelle.
+                </p>
+
+                <div class="mt-6 grid gap-4 md:grid-cols-2">
+                    @foreach($cards as $card)
+                        <div class="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <div class="text-sm font-semibold text-white/65">{{ $card['label'] }}</div>
+                                    <div class="mt-3 text-3xl font-black text-white">{{ $card['value'] }}</div>
+                                    <div class="mt-2 text-xs text-white/55">{{ $card['meta'] }}</div>
+                                </div>
+                                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br {{ $card['colors'] }} text-xl text-white shadow-lg shadow-slate-950/20">
+                                    <i class="fa-solid {{ $card['icon'] }}"></i>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 backdrop-blur-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-semibold text-white/60">Priorites du jour</div>
+                        <div class="mt-1 text-xl font-extrabold text-white">Etat des operations</div>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-white">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                </div>
+
+                <div class="mt-5 space-y-3">
+                    <div class="rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-4">
+                        <div class="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200">En attente</div>
+                        <div class="mt-2 text-3xl font-black text-white">{{ $stats['pending_orders'] }}</div>
+                        <div class="mt-1 text-xs text-white/60">Commandes a traiter rapidement</div>
+                    </div>
+                    <div class="rounded-2xl border border-violet-400/20 bg-violet-500/10 px-4 py-4">
+                        <div class="text-xs font-semibold uppercase tracking-[0.22em] text-violet-200">En traitement</div>
+                        <div class="mt-2 text-3xl font-black text-white">{{ $stats['processing_orders'] }}</div>
+                        <div class="mt-1 text-xs text-white/60">Confirmees, en preparation ou expediees</div>
+                    </div>
+                    <div class="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-4">
+                        <div class="text-xs font-semibold uppercase tracking-[0.22em] text-red-200">Rupture / alerte</div>
+                        <div class="mt-2 text-3xl font-black text-white">{{ $stats['empty_stock_products'] + $stats['low_stock_products'] }}</div>
+                        <div class="mt-1 text-xs text-white/60">Produits a reapprovisionner</div>
+                    </div>
+                </div>
+
+                <div class="mt-6 rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <div class="text-sm font-semibold text-white/60">Actions rapides</div>
+                    <div class="mt-4 space-y-3">
+                        <a href="{{ url('/distributeur/stocks') }}" class="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 transition hover:bg-white/10">
+                            <div>
+                                <div class="font-bold text-white">Mettre a jour les stocks</div>
+                                <div class="text-xs text-white/55">Ajouter ou corriger les quantites</div>
+                            </div>
+                            <i class="fa-solid fa-arrow-right text-amber-300"></i>
+                        </a>
+                        <a href="{{ url('/distributeur/commandes') }}" class="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 transition hover:bg-white/10">
+                            <div>
+                                <div class="font-bold text-white">Suivre les commandes</div>
+                                <div class="text-xs text-white/55">Traiter les statuts clients</div>
+                            </div>
+                            <i class="fa-solid fa-arrow-right text-emerald-300"></i>
+                        </a>
+                        <a href="{{ url('/distributeur/clients') }}" class="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 transition hover:bg-white/10">
+                            <div>
+                                <div class="font-bold text-white">Mes clients</div>
+                                <div class="text-xs text-white/55">Consulter la base rattachee</div>
+                            </div>
+                            <i class="fa-solid fa-arrow-right text-sky-300"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid gap-6 xl:grid-cols-[1.45fr_0.95fr]">
+        <div class="rounded-[30px] border border-white/10 bg-[var(--panel-card)] p-5 shadow-2xl shadow-slate-950/10">
+            <div class="mb-5 flex items-center justify-between">
+                <div>
+                    <div class="text-sm font-semibold text-white/60">Dernieres commandes</div>
+                    <div class="mt-1 text-2xl font-extrabold">Activite recente</div>
+                </div>
+                <a href="{{ url('/distributeur/commandes') }}" class="inline-flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-2 text-sm font-semibold text-[var(--panel-primary)] transition hover:bg-white/10">
+                    <span>Voir tout</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="text-white/60">
+                        <tr>
+                            <th class="py-3 pr-4 text-left">Commande</th>
+                            <th class="py-3 pr-4 text-left">Client</th>
+                            <th class="py-3 pr-4 text-left">Date</th>
+                            <th class="py-3 pr-4 text-left">Statut</th>
+                            <th class="py-3 text-right">Montant</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/10">
+                        @forelse($latestOrders as $order)
+                            <tr class="transition hover:bg-white/5">
+                                <td class="py-3 pr-4">
+                                    <a href="{{ url('/distributeur/commandes/'.$order->id) }}" class="font-extrabold text-white">#{{ $order->id }}</a>
+                                </td>
+                                <td class="py-3 pr-4">
+                                    <div class="font-semibold">{{ $order->client?->prenom }} {{ $order->client?->nom }}</div>
+                                </td>
+                                <td class="py-3 pr-4 text-white/70">{{ optional($order->date_cmd)->format('d/m/Y H:i') }}</td>
+                                <td class="py-3 pr-4">
+                                    <span class="rounded-full px-3 py-1 text-xs font-bold {{ $statusUi[$order->statut] ?? 'bg-white/10 text-white' }}">
+                                        {{ str_replace('_', ' ', $order->statut) }}
+                                    </span>
+                                </td>
+                                <td class="py-3 text-right font-extrabold">{{ number_format($order->montant_total, 2, '.', ' ') }} DA</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="py-10 text-center text-white/60">Aucune commande recente.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="rounded-[30px] border border-white/10 bg-[var(--panel-card)] p-5 shadow-2xl shadow-slate-950/10">
+                <div class="mb-4 flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-semibold text-white/60">Performance commerciale</div>
+                        <div class="mt-1 text-2xl font-extrabold">CA livre</div>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-white">
+                        <i class="fa-solid fa-sack-dollar"></i>
+                    </div>
+                </div>
+                <div class="rounded-3xl border border-emerald-400/20 bg-emerald-500/10 p-5">
+                    <div class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">Total livre</div>
+                    <div class="mt-3 text-3xl font-black text-white">{{ number_format($stats['revenue'], 2, '.', ' ') }} DA</div>
+                    <div class="mt-2 text-sm text-white/65">{{ $stats['delivered_orders'] }} commandes livrees facturees</div>
+                </div>
+                <div class="mt-4 grid grid-cols-2 gap-3">
+                    <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <div class="text-xs uppercase tracking-[0.2em] text-white/50">Stock faible</div>
+                        <div class="mt-2 text-2xl font-black text-white">{{ $stats['low_stock_products'] }}</div>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <div class="text-xs uppercase tracking-[0.2em] text-white/50">Rupture</div>
+                        <div class="mt-2 text-2xl font-black text-white">{{ $stats['empty_stock_products'] }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-[30px] border border-white/10 bg-[var(--panel-card)] p-5 shadow-2xl shadow-slate-950/10">
+                <div class="mb-4 flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-semibold text-white/60">Clients les plus actifs</div>
+                        <div class="mt-1 text-2xl font-extrabold">Top relation client</div>
+                    </div>
+                    <a href="{{ url('/distributeur/clients') }}" class="text-sm font-semibold text-[var(--panel-primary)]">Ouvrir</a>
+                </div>
+                <div class="space-y-3">
+                    @forelse($topClients as $client)
+                        <div class="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                            <div>
+                                <div class="font-bold text-white">{{ $client->prenom }} {{ $client->nom }}</div>
+                                <div class="text-xs text-white/55">{{ $client->email }}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-extrabold text-white">{{ $client->commandes_count }}</div>
+                                <div class="text-xs text-white/55">commandes</div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="rounded-2xl border border-white/10 bg-white/5 px-4 py-8 text-center text-white/60">Aucun client a afficher.</div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
 @endsection
