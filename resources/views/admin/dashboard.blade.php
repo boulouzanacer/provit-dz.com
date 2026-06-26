@@ -6,7 +6,6 @@
         ['label' => 'Clients', 'value' => $stats['clients'], 'meta' => 'Base clients globale', 'icon' => 'fa-users', 'colors' => 'from-violet-500 via-fuchsia-500 to-pink-500'],
         ['label' => 'Categories', 'value' => $stats['categories'], 'meta' => $stats['active_products'].' produits actifs', 'icon' => 'fa-tags', 'colors' => 'from-amber-500 via-orange-500 to-red-500'],
         ['label' => 'Commandes', 'value' => $stats['orders'], 'meta' => $stats['pending_orders'].' en cours', 'icon' => 'fa-cart-shopping', 'colors' => 'from-emerald-500 via-teal-500 to-cyan-500'],
-        ['label' => 'Chiffre d affaires', 'value' => number_format($stats['revenue'], 2, '.', ' ').' DA', 'meta' => $stats['delivered_orders'].' commandes livrees', 'icon' => 'fa-sack-dollar', 'colors' => 'from-rose-500 via-red-500 to-orange-500'],
     ];
     $statusUi = [
         'en_attente' => 'bg-amber-500/15 text-amber-200 border border-amber-400/20',
@@ -25,14 +24,36 @@
                 <div class="inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-200">
                     Vue globale
                 </div>
-                <h2 class="mt-4 text-3xl font-black tracking-tight text-white lg:text-4xl">Dashboard administration plus clair, plus lisible et oriente pilotage.</h2>
+                <h2 class="mt-4 text-3xl font-black tracking-tight text-white lg:text-4xl">Dashboard Administration</h2>
                 <p class="mt-3 max-w-3xl text-sm leading-7 text-white/70">
                     Suivez les distributeurs, le catalogue, les commandes et le chiffre d affaires depuis une vue synthetique avec priorites visuelles et acces rapides.
                 </p>
 
-                <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div class="mt-6 rounded-[30px] border border-rose-400/20 bg-gradient-to-br from-rose-500/20 via-red-500/15 to-orange-500/20 p-5 shadow-2xl shadow-red-950/15">
+                    <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                            <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-rose-100">
+                                Chiffre d affaires
+                            </div>
+                            <div class="mt-4 text-4xl font-black text-white lg:text-5xl">{{ number_format($stats['revenue'], 2, '.', ' ') }} DA</div>
+                            <div class="mt-3 text-sm text-white/70">{{ $stats['delivered_orders'] }} commandes livrees contribuent au chiffre d affaires actuel.</div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="flex h-20 w-20 items-center justify-center rounded-[28px] bg-gradient-to-br from-rose-500 via-red-500 to-orange-500 text-3xl text-white shadow-xl shadow-red-950/20">
+                                <i class="fa-solid fa-sack-dollar"></i>
+                            </div>
+                            <div class="rounded-3xl border border-white/10 bg-white/10 px-5 py-4">
+                                <div class="text-xs uppercase tracking-[0.22em] text-white/55">Objectif visuel</div>
+                                <div class="mt-2 text-lg font-extrabold text-white">Carte hero premium</div>
+                                <div class="mt-1 text-xs text-white/60">Indicateur financier prioritaire</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
                     @foreach($cards as $card)
-                        <div class="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                        <div class="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm {{ $card['class'] ?? '' }}">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <div class="text-sm font-semibold text-white/65">{{ $card['label'] }}</div>
