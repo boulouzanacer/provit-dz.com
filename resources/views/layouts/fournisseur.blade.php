@@ -67,5 +67,6 @@
         </main>
     </div>
 </div>
+@include('partials.delete-confirm-modal')
 </body>
 </html>

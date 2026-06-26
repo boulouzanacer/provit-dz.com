@@ -9,7 +9,6 @@ use App\Models\Cmd2;
 use App\Models\DistributorStock;
 use App\Models\Fournisseur;
 use App\Models\Produit;
-use App\Models\StockMovement;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -364,23 +363,12 @@ class StoreController extends Controller
                         throw new \RuntimeException('Stock insuffisant pour ' . $item['produit']->designation);
                     }
 
-                    $stock->update(['quantite' => (int) $stock->quantite - (int) $item['qty']]);
-
                     Cmd2::create([
                         'id_cmd' => $order->id,
                         'id_produit' => $item['produit']->id,
                         'quantite' => $item['qty'],
                         'prix_unitaire' => $item['unit'],
                         'sous_total' => $item['total'],
-                    ]);
-
-                    StockMovement::create([
-                        'id_frs' => $frsId,
-                        'id_produit' => $item['produit']->id,
-                        'id_cmd' => $order->id,
-                        'quantity' => -1 * (int) $item['qty'],
-                        'movement_type' => 'order',
-                        'note' => 'Commande #' . $order->id,
                     ]);
                 }
 

@@ -5,13 +5,20 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Cmd1;
 use App\Models\Fournisseur;
+use App\Services\OrderStatusService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use RuntimeException;
 
 class CommandeController extends Controller
 {
+    public function __construct(
+        private readonly OrderStatusService $orderStatusService,
+    ) {
+    }
+
     public function index(Request $request): View
     {
         $status = trim((string) $request->query('status', ''));
@@ -63,7 +70,11 @@ class CommandeController extends Controller
             'statut' => ['required', Rule::in(['en_attente', 'confirmee', 'en_preparation', 'expediee', 'livree', 'annulee'])],
         ]);
 
-        $order->update(['statut' => $data['statut']]);
+        try {
+            $this->orderStatusService->updateStatus($order, $data['statut']);
+        } catch (RuntimeException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
 
         return back()->with('success', 'Statut de commande mis a jour.');
     }
