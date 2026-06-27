@@ -83,15 +83,8 @@
                             <div class="mt-4 text-4xl font-black text-white lg:text-5xl">{{ number_format($filteredStats['revenue'], 2, '.', ' ') }} DA</div>
                             <div class="mt-3 text-sm text-white/70">{{ $filteredStats['delivered_orders'] }} commandes livrees contribuent au chiffre d affaires sur la periode selectionnee.</div>
                         </div>
-                        <div class="flex items-center gap-4">
-                            <div class="flex h-20 w-20 items-center justify-center rounded-[28px] bg-gradient-to-br from-rose-500 via-red-500 to-orange-500 text-3xl text-white shadow-xl shadow-red-950/20">
-                                <i class="fa-solid fa-sack-dollar"></i>
-                            </div>
-                            <div class="rounded-3xl border border-white/10 bg-white/10 px-5 py-4">
-                                <div class="text-xs uppercase tracking-[0.22em] text-white/55">Objectif visuel</div>
-                                <div class="mt-2 text-lg font-extrabold text-white">Carte hero premium</div>
-                                <div class="mt-1 text-xs text-white/60">Indicateur financier prioritaire</div>
-                            </div>
+                        <div class="flex h-20 w-20 items-center justify-center rounded-[28px] bg-gradient-to-br from-rose-500 via-red-500 to-orange-500 text-3xl text-white shadow-xl shadow-red-950/20">
+                            <i class="fa-solid fa-sack-dollar"></i>
                         </div>
                     </div>
                 </div>
