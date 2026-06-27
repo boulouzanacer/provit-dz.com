@@ -152,20 +152,33 @@
                 <div class="mt-6 rounded-3xl border border-white/10 bg-white/5 p-4">
                     <div class="text-sm font-semibold text-white/60">Flux commandes</div>
                     <div class="mt-4 space-y-3">
-                        @foreach([
-                            ['label' => 'En attente', 'key' => 'en_attente', 'width' => $stats['orders'] > 0 ? max(8, min(100, (int) round(($statusBreakdown['en_attente'] / $stats['orders']) * 100))) : 8, 'bar' => 'bg-amber-400'],
-                            ['label' => 'Confirmees', 'key' => 'confirmee', 'width' => $stats['orders'] > 0 ? max(8, min(100, (int) round(($statusBreakdown['confirmee'] / $stats['orders']) * 100))) : 8, 'bar' => 'bg-sky-400'],
-                            ['label' => 'Livrees', 'key' => 'livree', 'width' => $stats['orders'] > 0 ? max(8, min(100, (int) round(($statusBreakdown['livree'] / $stats['orders']) * 100))) : 8, 'bar' => 'bg-emerald-400'],
-                            ['label' => 'Annulees', 'key' => 'annulee', 'width' => $stats['orders'] > 0 ? max(8, min(100, (int) round(($statusBreakdown['annulee'] / $stats['orders']) * 100))) : 8, 'bar' => 'bg-red-400'],
-                        ] as $progress)
+                        @php
+                            $progressItems = [
+                                ['label' => 'En attente', 'key' => 'en_attente', 'width' => $stats['orders'] > 0 ? max(8, min(100, (int) round(($statusBreakdown['en_attente'] / $stats['orders']) * 100))) : 8],
+                                ['label' => 'Confirmees', 'key' => 'confirmee', 'width' => $stats['orders'] > 0 ? max(8, min(100, (int) round(($statusBreakdown['confirmee'] / $stats['orders']) * 100))) : 8],
+                                ['label' => 'Livrees', 'key' => 'livree', 'width' => $stats['orders'] > 0 ? max(8, min(100, (int) round(($statusBreakdown['livree'] / $stats['orders']) * 100))) : 8],
+                                ['label' => 'Annulees', 'key' => 'annulee', 'width' => $stats['orders'] > 0 ? max(8, min(100, (int) round(($statusBreakdown['annulee'] / $stats['orders']) * 100))) : 8],
+                            ];
+                        @endphp
+                        @foreach($progressItems as $progress)
                             <div>
                                 <div class="mb-1 flex items-center justify-between text-xs">
                                     <span class="text-white/65">{{ $progress['label'] }}</span>
                                     <span class="font-bold text-white">{{ $statusBreakdown[$progress['key']] }}</span>
                                 </div>
-                                <div class="h-2 rounded-full bg-white/10">
-                                    <div class="h-2 rounded-full {{ $progress['bar'] }}" style="width: {{ $progress['width'] }}%"></div>
-                                </div>
+                                @php
+                                    $progressClass = 'h-2 w-full overflow-hidden rounded-full bg-white/10 accent-red-400';
+
+                                    if ($progress['key'] === 'en_attente') {
+                                        $progressClass = 'h-2 w-full overflow-hidden rounded-full bg-white/10 accent-amber-400';
+                                    } elseif ($progress['key'] === 'confirmee') {
+                                        $progressClass = 'h-2 w-full overflow-hidden rounded-full bg-white/10 accent-sky-400';
+                                    } elseif ($progress['key'] === 'livree') {
+                                        $progressClass = 'h-2 w-full overflow-hidden rounded-full bg-white/10 accent-emerald-400';
+                                    }
+
+                                    echo '<progress value="'.$progress['width'].'" max="100" class="'.$progressClass.'"></progress>';
+                                @endphp
                             </div>
                         @endforeach
                     </div>
