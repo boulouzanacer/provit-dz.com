@@ -36,14 +36,16 @@ class ImageProduitService
             $baseName = Str::uuid()->toString() . '_' . now()->timestamp;
             $filename = $baseName . '.webp';
             $thumbName = $baseName . '_thumb.webp';
+            $mainPath = $dir . '/' . $filename;
+            $thumbPath = $dir . '/' . $thumbName;
 
             if ($manager) {
                 try {
                     $image = $manager->read($file->getPathname())->cover(900, 900);
-                    Storage::disk('public')->put($dir . '/' . $filename, (string) $image->toWebp(80));
+                    Storage::disk('public')->put($mainPath, (string) $image->toWebp(80));
 
                     $thumb = $manager->read($file->getPathname())->cover(260, 260);
-                    Storage::disk('public')->put($dir . '/' . $thumbName, (string) $thumb->toWebp(80));
+                    Storage::disk('public')->put($thumbPath, (string) $thumb->toWebp(80));
                 } catch (\Throwable) {
                     $manager = null;
                 }
@@ -52,25 +54,21 @@ class ImageProduitService
             if (! $manager) {
                 $extension = $file->getClientOriginalExtension() ?: 'jpg';
                 $filename = $baseName . '.' . strtolower($extension);
-                $path = $file->storeAs($dir, $filename, 'public');
+                $mainPath = $file->storeAs($dir, $filename, 'public');
                 $thumbName = $filename;
-                $url = Storage::url($path);
-                $thumbUrl = $url;
-            } else {
-                $url = Storage::url($dir . '/' . $filename);
-                $thumbUrl = Storage::url($dir . '/' . $thumbName);
+                $thumbPath = $mainPath;
             }
 
             $imageRecord = ProduitImage::create([
                 'id_produit' => $produit->id,
                 'filename' => $filename,
-                'url_principale' => $url,
-                'url_thumbnail' => $thumbUrl,
+                'url_principale' => $mainPath,
+                'url_thumbnail' => $thumbPath,
                 'ordre' => $nextOrder++,
             ]);
 
             if (blank($produit->image_principale)) {
-                $produit->update(['image_principale' => $imageRecord->url_principale]);
+                $produit->update(['image_principale' => $imageRecord->getRawOriginal('url_principale')]);
             }
         }
     }
@@ -83,7 +81,7 @@ class ImageProduitService
             ->get();
 
         foreach ($images as $image) {
-            foreach ([$image->url_principale, $image->url_thumbnail] as $url) {
+            foreach ([$image->getRawOriginal('url_principale'), $image->getRawOriginal('url_thumbnail')] as $url) {
                 $path = $this->storagePathFromUrl((string) $url);
                 if ($path !== null) {
                     Storage::disk('public')->delete($path);
@@ -94,18 +92,29 @@ class ImageProduitService
         }
 
         $first = $produit->images()->orderBy('ordre')->first();
-        $produit->update(['image_principale' => $first?->url_principale]);
+        $produit->update(['image_principale' => $first?->getRawOriginal('url_principale')]);
     }
 
     private function storagePathFromUrl(string $url): ?string
     {
-        $needle = '/storage/';
-        $position = strpos($url, $needle);
+        $raw = trim($url);
 
-        if ($position === false) {
+        if ($raw === '') {
             return null;
         }
 
-        return substr($url, $position + strlen($needle));
+        $path = parse_url($raw, PHP_URL_PATH);
+        $path = is_string($path) && $path !== '' ? $path : $raw;
+        $path = ltrim($path, '/');
+
+        if (Str::startsWith($path, 'storage/')) {
+            return substr($path, strlen('storage/'));
+        }
+
+        if (Str::startsWith($path, 'public/')) {
+            return substr($path, strlen('public/'));
+        }
+
+        return $path;
     }
 }

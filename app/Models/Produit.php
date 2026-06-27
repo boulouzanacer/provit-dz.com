@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class Produit extends Model
 {
@@ -39,6 +40,11 @@ class Produit extends Model
         'abonne_only' => 'integer',
         'actif' => 'integer',
     ];
+
+    public function getImagePrincipaleAttribute($value): ?string
+    {
+        return self::normalizeMediaUrl($value);
+    }
 
     public function category(): BelongsTo
     {
@@ -130,5 +136,36 @@ class Produit extends Model
         }
 
         return (int) ($this->distributorStocks()->where('id_frs', $frsId)->value('quantite') ?? 0);
+    }
+
+    public static function normalizeMediaUrl(?string $value): ?string
+    {
+        $raw = trim((string) $value);
+
+        if ($raw === '') {
+            return null;
+        }
+
+        $lower = strtolower($raw);
+
+        if (Str::startsWith($lower, ['http://', 'https://'])) {
+            $path = parse_url($raw, PHP_URL_PATH);
+
+            if (is_string($path) && Str::startsWith($path, '/storage/')) {
+                return asset(ltrim($path, '/'));
+            }
+
+            return $raw;
+        }
+
+        if (Str::startsWith($raw, '/storage/')) {
+            return asset(ltrim($raw, '/'));
+        }
+
+        if (Str::startsWith($raw, 'storage/')) {
+            return asset($raw);
+        }
+
+        return asset('storage/' . ltrim($raw, '/'));
     }
 }

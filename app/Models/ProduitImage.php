@@ -20,6 +20,16 @@ class ProduitImage extends Model
         'ordre',
     ];
 
+    public function getUrlPrincipaleAttribute($value): ?string
+    {
+        return Produit::normalizeMediaUrl($value);
+    }
+
+    public function getUrlThumbnailAttribute($value): ?string
+    {
+        return Produit::normalizeMediaUrl($value);
+    }
+
     public function produit(): BelongsTo
     {
         return $this->belongsTo(Produit::class, 'id_produit', 'id');
