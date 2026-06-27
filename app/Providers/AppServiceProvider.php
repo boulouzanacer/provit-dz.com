@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Fournisseur;
+use App\Models\Setting;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -40,6 +41,10 @@ class AppServiceProvider extends ServiceProvider
                     ->orderBy('nom_frs')
                     ->get(['id', 'nom_frs', 'ville', 'adresse']),
                 'selectedFrsId' => (int) session('selected_frs_id', 0),
+                'siteSettings' => [
+                    'company_name' => Setting::getValue('company_name', 'Pro-Vit'),
+                    'site_logo_url' => Setting::getFileUrl('site_logo_path'),
+                ],
             ]);
         });
     }

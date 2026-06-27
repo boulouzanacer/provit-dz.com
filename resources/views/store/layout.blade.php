@@ -15,13 +15,21 @@
 </head>
 <body class="min-h-screen bg-[var(--store-bg)] text-slate-900">
 @php($cartCount = count(($cartSummary['items'] ?? [])))
+@php($siteBrand = $siteSettings['company_name'] ?? 'Pro-Vit')
+@php($siteLogoUrl = $siteSettings['site_logo_url'] ?? '')
 <div class="min-h-screen flex flex-col">
     <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div class="flex items-center justify-between gap-4">
                 <a href="{{ url('/') }}" class="flex items-center gap-3">
-                    <div class="h-11 w-11 rounded-2xl flex items-center justify-center font-extrabold text-white" style="background:linear-gradient(135deg,var(--store-primary),#0f3b8c)">PV</div>
-                    <div><div class="font-extrabold tracking-wide">Pro-Vit</div><div class="text-xs text-slate-500">Produits detergents</div></div>
+                    <div class="h-11 w-11 overflow-hidden rounded-2xl flex items-center justify-center font-extrabold text-white shadow-sm" style="background:linear-gradient(135deg,var(--store-primary),#0f3b8c)">
+                        @if($siteLogoUrl !== '')
+                            <img src="{{ $siteLogoUrl }}" alt="{{ $siteBrand }}" class="h-full w-full object-cover">
+                        @else
+                            PV
+                        @endif
+                    </div>
+                    <div><div class="font-extrabold tracking-wide">{{ $siteBrand }}</div><div class="text-xs text-slate-500">Produits detergents</div></div>
                 </a>
                 <a href="{{ url('/panier') }}" class="lg:hidden inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold"><i class="fa-solid fa-cart-shopping text-[var(--store-primary)]"></i><span>{{ $cartCount }}</span></a>
             </div>
