@@ -18,6 +18,53 @@
 @endphp
 
 <div class="space-y-6">
+    <section class="rounded-[30px] border border-white/10 bg-[var(--panel-card)] p-5 shadow-2xl shadow-slate-950/10">
+        <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+            <div>
+                <div class="text-sm font-semibold text-white/60">Rubrique statistiques</div>
+                <div class="mt-1 text-2xl font-extrabold">Filtrer par date et heure</div>
+                <div class="mt-2 text-sm text-white/60">Analyse vos commandes et votre activite commerciale sur la plage choisie.</div>
+            </div>
+            <form method="GET" action="{{ url('/distributeur/dashboard') }}" class="grid gap-3 md:grid-cols-3 xl:min-w-[720px]">
+                <div>
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.22em] text-white/45">Du</label>
+                    <input type="datetime-local" name="from" value="{{ $range['from'] }}" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-[var(--panel-primary)]">
+                </div>
+                <div>
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.22em] text-white/45">Au</label>
+                    <input type="datetime-local" name="to" value="{{ $range['to'] }}" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 outline-none focus:border-[var(--panel-primary)]">
+                </div>
+                <div class="flex items-end gap-3">
+                    <button class="inline-flex flex-1 items-center justify-center rounded-2xl px-4 py-3 text-sm font-extrabold text-white" style="background:linear-gradient(135deg,#1E6FD9,#0f3b8c)">Appliquer</button>
+                    <a href="{{ url('/distributeur/dashboard') }}" class="inline-flex items-center justify-center rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold hover:bg-white/10">Reset</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            @foreach([
+                ['label' => 'Commandes', 'value' => $filteredStats['orders'], 'meta' => 'Sur la periode', 'icon' => 'fa-cart-shopping', 'tone' => 'from-sky-500 to-blue-600'],
+                ['label' => 'En attente', 'value' => $filteredStats['pending_orders'], 'meta' => 'Commandes non traitees', 'icon' => 'fa-hourglass-half', 'tone' => 'from-amber-500 to-orange-500'],
+                ['label' => 'En traitement', 'value' => $filteredStats['processing_orders'], 'meta' => 'Confirmees, preparation, expediees', 'icon' => 'fa-gears', 'tone' => 'from-violet-500 to-fuchsia-500'],
+                ['label' => 'Livrees', 'value' => $filteredStats['delivered_orders'], 'meta' => 'Commandes finalisees', 'icon' => 'fa-circle-check', 'tone' => 'from-emerald-500 to-teal-500'],
+                ['label' => 'CA periode', 'value' => number_format($filteredStats['revenue'], 2, '.', ' ').' DA', 'meta' => 'Panier moyen: '.number_format($filteredStats['average_order'], 2, '.', ' ').' DA', 'icon' => 'fa-sack-dollar', 'tone' => 'from-rose-500 to-red-500'],
+            ] as $item)
+                <div class="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="text-sm font-semibold text-white/65">{{ $item['label'] }}</div>
+                            <div class="mt-3 text-3xl font-black text-white">{{ $item['value'] }}</div>
+                            <div class="mt-2 text-xs text-white/55">{{ $item['meta'] }}</div>
+                        </div>
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br {{ $item['tone'] }} text-lg text-white">
+                            <i class="fa-solid {{ $item['icon'] }}"></i>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </section>
+
     <section class="overflow-hidden rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.28),_transparent_28%),linear-gradient(135deg,rgba(15,23,42,0.96),rgba(30,41,59,0.9))] p-6 lg:p-8">
         <div class="grid gap-6 xl:grid-cols-[1.55fr_0.95fr]">
             <div>
@@ -61,12 +108,12 @@
                 <div class="mt-5 space-y-3">
                     <div class="rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-4">
                         <div class="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200">En attente</div>
-                        <div class="mt-2 text-3xl font-black text-white">{{ $stats['pending_orders'] }}</div>
+                        <div class="mt-2 text-3xl font-black text-white">{{ $filteredStats['pending_orders'] }}</div>
                         <div class="mt-1 text-xs text-white/60">Commandes a traiter rapidement</div>
                     </div>
                     <div class="rounded-2xl border border-violet-400/20 bg-violet-500/10 px-4 py-4">
                         <div class="text-xs font-semibold uppercase tracking-[0.22em] text-violet-200">En traitement</div>
-                        <div class="mt-2 text-3xl font-black text-white">{{ $stats['processing_orders'] }}</div>
+                        <div class="mt-2 text-3xl font-black text-white">{{ $filteredStats['processing_orders'] }}</div>
                         <div class="mt-1 text-xs text-white/60">Confirmees, en preparation ou expediees</div>
                     </div>
                     <div class="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-4">
@@ -170,8 +217,8 @@
                 </div>
                 <div class="rounded-3xl border border-emerald-400/20 bg-emerald-500/10 p-5">
                     <div class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">Total livre</div>
-                    <div class="mt-3 text-3xl font-black text-white">{{ number_format($stats['revenue'], 2, '.', ' ') }} DA</div>
-                    <div class="mt-2 text-sm text-white/65">{{ $stats['delivered_orders'] }} commandes livrees facturees</div>
+                    <div class="mt-3 text-3xl font-black text-white">{{ number_format($filteredStats['revenue'], 2, '.', ' ') }} DA</div>
+                    <div class="mt-2 text-sm text-white/65">{{ $filteredStats['delivered_orders'] }} commandes livrees facturees sur la periode</div>
                 </div>
                 <div class="mt-4 grid grid-cols-2 gap-3">
                     <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -201,7 +248,7 @@
                                 <div class="text-xs text-white/55">{{ $client->email }}</div>
                             </div>
                             <div class="text-right">
-                                <div class="text-sm font-extrabold text-white">{{ $client->commandes_count }}</div>
+                                <div class="text-sm font-extrabold text-white">{{ $client->filtered_commandes_count }}</div>
                                 <div class="text-xs text-white/55">commandes</div>
                             </div>
                         </div>
