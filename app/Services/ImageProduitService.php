@@ -59,6 +59,18 @@ class ImageProduitService
                 $thumbPath = $mainPath;
             }
 
+            // #region debug-point A:stored-image-paths
+            $this->debugReport('A', '[DEBUG] Stored product image candidate paths', [
+                'product_id' => $produit->id,
+                'disk' => 'public',
+                'main_path' => $mainPath,
+                'thumb_path' => $thumbPath,
+                'main_exists' => Storage::disk('public')->exists($mainPath),
+                'thumb_exists' => Storage::disk('public')->exists($thumbPath),
+                'raw_image_principale_before' => $produit->getRawOriginal('image_principale'),
+            ]);
+            // #endregion
+
             $imageRecord = ProduitImage::create([
                 'id_produit' => $produit->id,
                 'filename' => $filename,
@@ -70,6 +82,16 @@ class ImageProduitService
             if (blank($produit->image_principale)) {
                 $produit->update(['image_principale' => $imageRecord->getRawOriginal('url_principale')]);
             }
+
+            // #region debug-point B:image-record-persisted
+            $this->debugReport('B', '[DEBUG] Persisted product image record', [
+                'product_id' => $produit->id,
+                'image_id' => $imageRecord->id,
+                'raw_url_principale' => $imageRecord->getRawOriginal('url_principale'),
+                'raw_url_thumbnail' => $imageRecord->getRawOriginal('url_thumbnail'),
+                'raw_image_principale_after' => $produit->fresh()?->getRawOriginal('image_principale'),
+            ]);
+            // #endregion
         }
     }
 
@@ -116,5 +138,45 @@ class ImageProduitService
         }
 
         return $path;
+    }
+
+    private function debugReport(string $hypothesisId, string $message, array $data): void
+    {
+        $envPath = base_path('.dbg/product-image-missing.env');
+        $serverUrl = 'http://127.0.0.1:7777/event';
+        $sessionId = 'product-image-missing';
+
+        if (is_file($envPath)) {
+            foreach ((array) file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+                if (str_starts_with($line, 'DEBUG_SERVER_URL=')) {
+                    $serverUrl = substr($line, strlen('DEBUG_SERVER_URL='));
+                } elseif (str_starts_with($line, 'DEBUG_SESSION_ID=')) {
+                    $sessionId = substr($line, strlen('DEBUG_SESSION_ID='));
+                }
+            }
+        }
+
+        $payload = json_encode([
+            'sessionId' => $sessionId,
+            'runId' => 'pre-fix',
+            'hypothesisId' => $hypothesisId,
+            'location' => 'app/Services/ImageProduitService.php',
+            'msg' => $message,
+            'data' => $data,
+            'ts' => (int) round(microtime(true) * 1000),
+        ]);
+
+        if (! is_string($payload)) {
+            return;
+        }
+
+        @file_get_contents($serverUrl, false, stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => "Content-Type: application/json\r\n",
+                'content' => $payload,
+                'timeout' => 1,
+            ],
+        ]));
     }
 }
