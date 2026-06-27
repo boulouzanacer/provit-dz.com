@@ -22,7 +22,6 @@
         <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div>
                 <div class="text-sm font-semibold text-white/60">Rubrique statistiques</div>
-                <div class="mt-1 text-2xl font-extrabold">Filtrer par date et heure</div>
                 <div class="mt-2 text-sm text-white/60">Analyse vos commandes et votre activite commerciale sur la plage choisie.</div>
             </div>
             <form method="GET" action="{{ url('/distributeur/dashboard') }}" class="grid gap-3 md:grid-cols-3 xl:min-w-[720px]">
@@ -71,12 +70,7 @@
                 <div class="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
                     Espace distributeur
                 </div>
-                <h2 class="mt-4 text-3xl font-black tracking-tight text-white lg:text-4xl">Un dashboard plus net pour piloter vos commandes, vos clients et vos stocks.</h2>
-                <p class="mt-3 max-w-3xl text-sm leading-7 text-white/70">
-                    Retrouvez les indicateurs essentiels, les priorites de stock et les actions quotidiennes depuis une interface plus lisible et plus professionnelle.
-                </p>
-
-                <div class="mt-6 grid gap-4 md:grid-cols-2">
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
                     @foreach($cards as $card)
                         <div class="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
                             <div class="flex items-start justify-between gap-3">

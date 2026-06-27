@@ -22,7 +22,6 @@
         <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div>
                 <div class="text-sm font-semibold text-white/60">Rubrique statistiques</div>
-                <div class="mt-1 text-2xl font-extrabold">Filtrer par date et heure</div>
                 <div class="mt-2 text-sm text-white/60">Analyse les commandes et le chiffre d affaires sur une periode precise.</div>
             </div>
             <form method="GET" action="{{ url('/admin/dashboard') }}" class="grid gap-3 md:grid-cols-3 xl:min-w-[720px]">
@@ -71,7 +70,6 @@
                 <div class="inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-200">
                     Vue globale
                 </div>
-                <h2 class="mt-4 text-3xl font-black tracking-tight text-white lg:text-4xl">Dashboard Administration</h2>
                 <p class="mt-3 max-w-3xl text-sm leading-7 text-white/70">
                     Suivez les distributeurs, le catalogue, les commandes et le chiffre d affaires depuis une vue synthetique avec priorites visuelles et acces rapides.
                 </p>
