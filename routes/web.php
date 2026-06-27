@@ -82,6 +82,7 @@ Route::prefix('admin')->middleware('auth.admin')->group(function () {
 
     Route::get('/parametres', [SettingController::class, 'index']);
     Route::post('/parametres', [SettingController::class, 'store']);
+    Route::delete('/parametres/site-logo', [SettingController::class, 'deleteSiteLogo']);
 });
 
 Route::prefix('distributeur')->middleware('auth.distributor')->group(function () {

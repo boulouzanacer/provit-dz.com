@@ -20,12 +20,12 @@ class ProduitImage extends Model
         'ordre',
     ];
 
-    public function getUrlPrincipaleAttribute($value): ?string
+    public function getUrlPrincipaleAttribute(mixed $value): ?string
     {
         return Produit::normalizeMediaUrl($value);
     }
 
-    public function getUrlThumbnailAttribute($value): ?string
+    public function getUrlThumbnailAttribute(mixed $value): ?string
     {
         return Produit::normalizeMediaUrl($value);
     }

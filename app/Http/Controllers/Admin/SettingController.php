@@ -64,4 +64,22 @@ class SettingController extends Controller
 
         return back()->with('success', 'Parametres enregistres.');
     }
+
+    public function deleteSiteLogo(): RedirectResponse
+    {
+        $logoPath = trim((string) Setting::getValue('site_logo_path', ''));
+
+        if (
+            $logoPath !== ''
+            && ! str_starts_with(strtolower($logoPath), 'http://')
+            && ! str_starts_with(strtolower($logoPath), 'https://')
+            && ! str_starts_with($logoPath, '/')
+        ) {
+            Storage::disk('public')->delete($logoPath);
+        }
+
+        Setting::putValue('site_logo_path', '');
+
+        return back()->with('success', 'Logo du site supprime.');
+    }
 }

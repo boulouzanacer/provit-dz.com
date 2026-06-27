@@ -41,7 +41,7 @@ class Produit extends Model
         'actif' => 'integer',
     ];
 
-    public function getImagePrincipaleAttribute($value): ?string
+    public function getImagePrincipaleAttribute(mixed $value): ?string
     {
         $normalized = self::normalizeMediaUrl($value);
 

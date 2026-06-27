@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 @section('content')
-<div x-data="siteLogoSettings()" class="max-w-4xl rounded-3xl border border-white/10 bg-[var(--admin-card)] p-6">
+@php($siteLogoUrl = $settings['site_logo_url'] ?? '')
+<div x-data="siteLogoSettings()" data-site-logo-url="{{ $siteLogoUrl }}" id="site-logo-settings" class="max-w-4xl rounded-3xl border border-white/10 bg-[var(--admin-card)] p-6">
     <form method="POST" action="{{ url('/admin/parametres') }}" enctype="multipart/form-data" class="space-y-6">
         @csrf
         <div>
@@ -27,7 +28,7 @@
                 <div class="mt-1 text-sm text-white/60">Ce logo s affiche en haut a gauche du site public.</div>
             </div>
             <div class="flex flex-col gap-4 md:flex-row md:items-start">
-                <div class="h-24 w-24 overflow-hidden rounded-3xl border border-white/10 bg-black/30">
+                <div class="relative h-24 w-24 overflow-hidden rounded-3xl border border-white/10 bg-black/30">
                     <template x-if="previewUrl">
                         <img :src="previewUrl" alt="Logo du site" class="h-full w-full object-cover">
                     </template>
@@ -36,10 +37,13 @@
                             <i class="fa-regular fa-image text-2xl"></i>
                         </div>
                     </template>
+                    <button type="button" x-show="currentLogoUrl" x-on:click="document.getElementById('delete-site-logo-form')?.requestSubmit()" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-xs font-black text-white shadow-lg hover:bg-red-400">
+                        X
+                    </button>
                 </div>
                 <div class="flex-1">
                     <label class="mb-2 block text-sm font-semibold">Changer le logo</label>
-                    <input type="file" name="site_logo" accept="image/*" @change="previewLogo($event)" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                    <input type="file" name="site_logo" accept="image/*" x-on:change="previewLogo($event)" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
                     <div class="mt-2 text-xs text-white/55">Format image conseille. Le nouveau logo remplace automatiquement l ancien et s affiche ici avant enregistrement.</div>
                 </div>
             </div>
@@ -49,8 +53,12 @@
 </div>
 <script>
 function siteLogoSettings() {
+    const root = document.getElementById('site-logo-settings');
+    const initialLogoUrl = root?.dataset.siteLogoUrl ?? '';
+
     return {
-        previewUrl: @js($settings['site_logo_url'] ?? ''),
+        currentLogoUrl: initialLogoUrl,
+        previewUrl: initialLogoUrl,
         previewObjectUrl: null,
         previewLogo(event) {
             const files = event.target.files;
@@ -70,9 +78,13 @@ function siteLogoSettings() {
                 this.previewObjectUrl = null;
             }
 
-            this.previewUrl = @js($settings['site_logo_url'] ?? '');
+            this.previewUrl = initialLogoUrl;
         },
     };
 }
 </script>
+<form method="POST" action="{{ url('/admin/parametres/site-logo') }}" class="hidden" id="delete-site-logo-form" data-confirm-delete data-confirm-title="Supprimer le logo du site ?" data-confirm-message="Le logo actuel du site sera retire du header public." data-confirm-button="Oui, supprimer le logo">
+    @csrf
+    @method('DELETE')
+</form>
 @endsection
