@@ -6,6 +6,36 @@
     <div x-show="open" x-transition class="fixed inset-0 z-50 flex justify-end bg-slate-950/60"><div class="h-full w-full max-w-xl overflow-y-auto border-l border-white/10 bg-[var(--admin-bg)] p-6"><div class="flex items-center justify-between"><div class="text-xl font-extrabold" x-text="editing ? 'Modifier categorie' : 'Nouvelle categorie'"></div><button @click="open=false" class="h-10 w-10 rounded-xl border border-white/10"><i class="fa-solid fa-xmark"></i></button></div><form class="mt-6 space-y-4" method="POST" :action="action">@csrf<template x-if="editing"><input type="hidden" name="_method" value="PUT"></template><div><label class="mb-2 block text-sm font-semibold">Nom</label><input x-model="form.nom" name="nom" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3" required></div><div><label class="mb-2 block text-sm font-semibold">Description</label><textarea x-model="form.description" name="description" rows="4" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3"></textarea></div><label class="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3"><input type="checkbox" name="actif" value="1" x-model="form.actif"><span class="text-sm font-semibold">Active</span></label><button class="w-full rounded-2xl px-4 py-3 text-sm font-extrabold text-white" style="background:linear-gradient(135deg,#1E6FD9,#0f3b8c)">Enregistrer</button></form></div></div>
 </div>
 <script>
-function categoryManager(){return{open:false,editing:false,action:'{{ url('/admin/categories') }}',form:{nom:'',description:'',actif:true},openCreate(){this.open=true;this.editing=false;this.action='{{ url('/admin/categories') }}';this.form={nom:'',description:'',actif:true}},openEdit(category){this.open=true;this.editing=true;this.action='{{ url('/admin/categories') }}/'+category.id;this.form={nom:category.nom ?? '',description:category.description ?? '',actif:Number(category.actif)===1}}}}
+function categoryManager() {
+    const baseAction = "{{ url('/admin/categories') }}";
+    const emptyForm = {
+        nom: '',
+        description: '',
+        actif: true,
+    };
+
+    return {
+        open: false,
+        editing: false,
+        action: baseAction,
+        form: { ...emptyForm },
+        openCreate() {
+            this.open = true;
+            this.editing = false;
+            this.action = baseAction;
+            this.form = { ...emptyForm };
+        },
+        openEdit(category) {
+            this.open = true;
+            this.editing = true;
+            this.action = `${baseAction}/${category.id}`;
+            this.form = {
+                nom: category.nom ?? '',
+                description: category.description ?? '',
+                actif: Number(category.actif) === 1,
+            };
+        },
+    };
+}
 </script>
 @endsection

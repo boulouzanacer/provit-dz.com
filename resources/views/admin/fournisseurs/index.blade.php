@@ -11,6 +11,49 @@
     <div x-show="open" x-transition class="fixed inset-0 z-50 flex justify-end bg-slate-950/60"><div class="h-full w-full max-w-xl overflow-y-auto border-l border-white/10 bg-[var(--admin-bg)] p-6"><div class="flex items-center justify-between"><div class="text-xl font-extrabold" x-text="editing ? 'Modifier distributeur' : 'Nouveau distributeur'"></div><button @click="close()" class="h-10 w-10 rounded-xl border border-white/10"><i class="fa-solid fa-xmark"></i></button></div><form class="mt-6 space-y-4" method="POST" :action="action" enctype="multipart/form-data">@csrf<template x-if="editing"><input type="hidden" name="_method" value="PUT"></template><div><label class="mb-2 block text-sm font-semibold">Nom</label><input x-model="form.nom_frs" name="nom_frs" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3" required></div><div><label class="mb-2 block text-sm font-semibold">Email</label><input x-model="form.email" type="email" name="email" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3" required></div><div><label class="mb-2 block text-sm font-semibold">Mot de passe</label><input type="password" name="password" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3" :required="!editing"></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="mb-2 block text-sm font-semibold">Telephone</label><input x-model="form.telephone" name="telephone" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3"></div><div><label class="mb-2 block text-sm font-semibold">Ville</label><input x-model="form.ville" name="ville" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3"></div></div><div><label class="mb-2 block text-sm font-semibold">Adresse</label><textarea x-model="form.adresse" name="adresse" rows="3" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3"></textarea></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="mb-2 block text-sm font-semibold">Latitude</label><input x-model="form.latitude" name="latitude" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3"></div><div><label class="mb-2 block text-sm font-semibold">Longitude</label><input x-model="form.longitude" name="longitude" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3"></div></div><div><label class="mb-2 block text-sm font-semibold">Logo</label><input type="file" name="logo" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3"></div><label class="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3"><input type="checkbox" name="actif" value="1" x-model="form.actif"><span class="text-sm font-semibold">Actif</span></label><button class="w-full rounded-2xl px-4 py-3 text-sm font-extrabold text-white" style="background:linear-gradient(135deg,#1E6FD9,#0f3b8c)">Enregistrer</button></form></div></div>
 </div>
 <script>
-function distributorManager(){return{open:false,editing:false,action:'{{ url('/admin/distributeurs') }}',form:{nom_frs:'',email:'',telephone:'',ville:'',adresse:'',latitude:'',longitude:'',actif:true},openCreate(){this.open=true;this.editing=false;this.action='{{ url('/admin/distributeurs') }}';this.form={nom_frs:'',email:'',telephone:'',ville:'',adresse:'',latitude:'',longitude:'',actif:true};},openEdit(d){this.open=true;this.editing=true;this.action='{{ url('/admin/distributeurs') }}/'+d.id;this.form={nom_frs:d.nom_frs ?? '',email:d.email ?? '',telephone:d.telephone ?? '',ville:d.ville ?? '',adresse:d.adresse ?? '',latitude:d.latitude ?? '',longitude:d.longitude ?? '',actif:Number(d.actif)===1};},close(){this.open=false;}};}
+function distributorManager() {
+    const baseAction = "{{ url('/admin/distributeurs') }}";
+    const emptyForm = {
+        nom_frs: '',
+        email: '',
+        telephone: '',
+        ville: '',
+        adresse: '',
+        latitude: '',
+        longitude: '',
+        actif: true,
+    };
+
+    return {
+        open: false,
+        editing: false,
+        action: baseAction,
+        form: { ...emptyForm },
+        openCreate() {
+            this.open = true;
+            this.editing = false;
+            this.action = baseAction;
+            this.form = { ...emptyForm };
+        },
+        openEdit(d) {
+            this.open = true;
+            this.editing = true;
+            this.action = `${baseAction}/${d.id}`;
+            this.form = {
+                nom_frs: d.nom_frs ?? '',
+                email: d.email ?? '',
+                telephone: d.telephone ?? '',
+                ville: d.ville ?? '',
+                adresse: d.adresse ?? '',
+                latitude: d.latitude ?? '',
+                longitude: d.longitude ?? '',
+                actif: Number(d.actif) === 1,
+            };
+        },
+        close() {
+            this.open = false;
+        },
+    };
+}
 </script>
 @endsection
