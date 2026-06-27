@@ -73,6 +73,7 @@ Route::prefix('admin')->middleware('auth.admin')->group(function () {
     Route::post('/produits', [AdminProduitController::class, 'store']);
     Route::put('/produits/{id}', [AdminProduitController::class, 'update']);
     Route::delete('/produits/{id}', [AdminProduitController::class, 'destroy']);
+    Route::delete('/produits/{id}/images/{imageId}', [AdminProduitController::class, 'deleteImage']);
     Route::post('/produits/{id}/toggle-actif', [AdminProduitController::class, 'toggleActif']);
 
     Route::get('/commandes', [AdminCommandeController::class, 'index']);

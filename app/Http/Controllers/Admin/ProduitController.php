@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\DistributorStock;
 use App\Models\Fournisseur;
 use App\Models\Produit;
+use App\Models\ProduitImage;
 use App\Models\ProduitQuantityPrice;
 use App\Services\ImageProduitService;
 use Illuminate\Contracts\View\View;
@@ -67,6 +68,16 @@ class ProduitController extends Controller
             return $product;
         });
 
+        // #region debug-point D:store-request-files
+        $this->debugReport('D', '[DEBUG] Produit store request file presence', [
+            'product_id' => $product->id,
+            'has_file_images' => $request->hasFile('images'),
+            'file_count_images' => count(array_filter((array) $request->file('images', []))),
+            'has_file_images_brackets' => $request->hasFile('images.*'),
+            'all_file_keys' => array_keys($request->allFiles()),
+        ]);
+        // #endregion
+
         if ($request->hasFile('images')) {
             $this->imageService->storeUploadedImages($product, $request->file('images', []));
         }
@@ -98,6 +109,16 @@ class ProduitController extends Controller
             $this->syncTiers($request, $product, $enabled);
         });
 
+        // #region debug-point E:update-request-files
+        $this->debugReport('E', '[DEBUG] Produit update request file presence', [
+            'product_id' => $product->id,
+            'has_file_images' => $request->hasFile('images'),
+            'file_count_images' => count(array_filter((array) $request->file('images', []))),
+            'has_file_images_brackets' => $request->hasFile('images.*'),
+            'all_file_keys' => array_keys($request->allFiles()),
+        ]);
+        // #endregion
+
         if ($request->hasFile('images')) {
             $this->imageService->storeUploadedImages($product->fresh(), $request->file('images', []));
         }
@@ -111,6 +132,18 @@ class ProduitController extends Controller
         $product->delete();
 
         return back()->with('success', 'Produit supprime.');
+    }
+
+    public function deleteImage(int $id, int $imageId): RedirectResponse
+    {
+        $product = Produit::query()->findOrFail($id);
+        $image = ProduitImage::query()
+            ->where('id_produit', $product->id)
+            ->findOrFail($imageId);
+
+        $this->imageService->deleteImages($product, [$image->id]);
+
+        return back()->with('success', 'Photo supprimee.');
     }
 
     public function toggleActif(int $id): RedirectResponse
@@ -204,5 +237,45 @@ class ProduitController extends Controller
                 'updated_at' => $now,
             ])->values()->all()
         );
+    }
+
+    private function debugReport(string $hypothesisId, string $message, array $data): void
+    {
+        $envPath = base_path('.dbg/product-image-missing.env');
+        $serverUrl = 'http://127.0.0.1:7777/event';
+        $sessionId = 'product-image-missing';
+
+        if (is_file($envPath)) {
+            foreach ((array) file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+                if (str_starts_with($line, 'DEBUG_SERVER_URL=')) {
+                    $serverUrl = substr($line, strlen('DEBUG_SERVER_URL='));
+                } elseif (str_starts_with($line, 'DEBUG_SESSION_ID=')) {
+                    $sessionId = substr($line, strlen('DEBUG_SESSION_ID='));
+                }
+            }
+        }
+
+        $payload = json_encode([
+            'sessionId' => $sessionId,
+            'runId' => 'pre-fix',
+            'hypothesisId' => $hypothesisId,
+            'location' => 'app/Http/Controllers/Admin/ProduitController.php',
+            'msg' => $message,
+            'data' => $data,
+            'ts' => (int) round(microtime(true) * 1000),
+        ]);
+
+        if (! is_string($payload)) {
+            return;
+        }
+
+        @file_get_contents($serverUrl, false, stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => "Content-Type: application/json\r\n",
+                'content' => $payload,
+                'timeout' => 1,
+            ],
+        ]));
     }
 }
