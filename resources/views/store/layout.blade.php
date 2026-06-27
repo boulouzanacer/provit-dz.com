@@ -1,9 +1,17 @@
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
+    @php($siteBrand = $siteSettings['company_name'] ?? 'Pro-Vit')
+    @php($siteLogoUrl = $siteSettings['site_logo_url'] ?? '')
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? 'Pro-Vit' }} - {{ config('app.name', 'Pro-Vit') }}</title>
+    @if($siteLogoUrl !== '')
+        <link rel="icon" type="image/png" href="{{ $siteLogoUrl }}">
+        <link rel="apple-touch-icon" href="{{ $siteLogoUrl }}">
+    @else
+        <link rel="icon" href="{{ asset('favicon.ico') }}">
+    @endif
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,8 +23,6 @@
 </head>
 <body class="min-h-screen bg-[var(--store-bg)] text-slate-900">
 @php($cartCount = count(($cartSummary['items'] ?? [])))
-@php($siteBrand = $siteSettings['company_name'] ?? 'Pro-Vit')
-@php($siteLogoUrl = $siteSettings['site_logo_url'] ?? '')
 <div class="min-h-screen flex flex-col">
     <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
