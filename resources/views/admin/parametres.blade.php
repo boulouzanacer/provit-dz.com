@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('content')
-<div class="max-w-4xl rounded-3xl border border-white/10 bg-[var(--admin-card)] p-6">
+<div x-data="siteLogoSettings()" class="max-w-4xl rounded-3xl border border-white/10 bg-[var(--admin-card)] p-6">
     <form method="POST" action="{{ url('/admin/parametres') }}" enctype="multipart/form-data" class="space-y-6">
         @csrf
         <div>
@@ -28,22 +28,51 @@
             </div>
             <div class="flex flex-col gap-4 md:flex-row md:items-start">
                 <div class="h-24 w-24 overflow-hidden rounded-3xl border border-white/10 bg-black/30">
-                    @if(($settings['site_logo_url'] ?? '') !== '')
-                        <img src="{{ $settings['site_logo_url'] }}" alt="Logo du site" class="h-full w-full object-cover">
-                    @else
+                    <template x-if="previewUrl">
+                        <img :src="previewUrl" alt="Logo du site" class="h-full w-full object-cover">
+                    </template>
+                    <template x-if="!previewUrl">
                         <div class="flex h-full w-full items-center justify-center text-white/35">
                             <i class="fa-regular fa-image text-2xl"></i>
                         </div>
-                    @endif
+                    </template>
                 </div>
                 <div class="flex-1">
                     <label class="mb-2 block text-sm font-semibold">Changer le logo</label>
-                    <input type="file" name="site_logo" accept="image/*" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                    <div class="mt-2 text-xs text-white/55">Format image conseille. Le nouveau logo remplace automatiquement l ancien.</div>
+                    <input type="file" name="site_logo" accept="image/*" @change="previewLogo($event)" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                    <div class="mt-2 text-xs text-white/55">Format image conseille. Le nouveau logo remplace automatiquement l ancien et s affiche ici avant enregistrement.</div>
                 </div>
             </div>
         </div>
         <button class="rounded-2xl px-4 py-3 text-sm font-extrabold text-white" style="background:linear-gradient(135deg,#1E6FD9,#0f3b8c)">Enregistrer</button>
     </form>
 </div>
+<script>
+function siteLogoSettings() {
+    return {
+        previewUrl: @js($settings['site_logo_url'] ?? ''),
+        previewObjectUrl: null,
+        previewLogo(event) {
+            const files = event.target.files;
+
+            if (files && files[0]) {
+                if (this.previewObjectUrl) {
+                    URL.revokeObjectURL(this.previewObjectUrl);
+                }
+
+                this.previewObjectUrl = URL.createObjectURL(files[0]);
+                this.previewUrl = this.previewObjectUrl;
+                return;
+            }
+
+            if (this.previewObjectUrl) {
+                URL.revokeObjectURL(this.previewObjectUrl);
+                this.previewObjectUrl = null;
+            }
+
+            this.previewUrl = @js($settings['site_logo_url'] ?? '');
+        },
+    };
+}
+</script>
 @endsection
